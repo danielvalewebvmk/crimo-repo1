@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatPhone } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -124,6 +124,43 @@ export default function BrokerDashboard() {
   const { brokers, addBroker, removeBroker, updateBroker } = useBrokers();
   const { condos, addCondo, updateCondo, removeCondo } = useCondos();
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Dynamic Dashboard Data based on real properties
+  const dashboardStats = useMemo(() => {
+    const totalProperties = properties.length;
+    
+    // Calculate total value (parsing "R$ 1.234.567" format)
+    const totalValue = properties.reduce((acc, prop) => {
+      const numericValue = parseInt(prop.price.replace(/\D/g, '')) || 0;
+      return acc + numericValue;
+    }, 0);
+
+    const formattedValue = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      maximumFractionDigits: 1,
+      notation: 'compact'
+    }).format(totalValue);
+
+    // Group by category for the Pie Chart
+    const categoryCounts: Record<string, number> = {};
+    properties.forEach(prop => {
+      const cat = prop.category.split(', ')[0] || 'Outros';
+      categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+    });
+
+    const pieData = Object.entries(categoryCounts).map(([name, count]) => ({
+      name,
+      value: Math.round((count / totalProperties) * 100)
+    })).sort((a, b) => b.value - a.value).slice(0, 4);
+
+    return {
+      totalProperties,
+      totalValue: formattedValue,
+      pieData
+    };
+  }, [properties]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -1852,9 +1889,9 @@ export default function BrokerDashboard() {
               {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-8 lg:mb-10">
                 {[
-                  { label: 'Volume de Vendas', value: 'R$ 12.4M', icon: DollarSign, trend: '+18%', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                  { label: 'Volume em Carteira', value: dashboardStats.totalValue, icon: DollarSign, trend: '+12%', color: 'text-emerald-600', bg: 'bg-emerald-50' },
                   { label: 'Leads Ativos', value: '842', icon: Users, trend: '+24%', color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { label: 'Imóveis em Pauta', value: '38', icon: Home, trend: '-4%', color: 'text-amber-600', bg: 'bg-amber-50' },
+                  { label: 'Imóveis em Pauta', value: dashboardStats.totalProperties.toString(), icon: Home, trend: '+5%', color: 'text-amber-600', bg: 'bg-amber-50' },
                   { label: 'Taxa de Conversão', value: '4.2%', icon: TrendingUp, trend: '+2%', color: 'text-purple-600', bg: 'bg-purple-50' },
                 ].map((stat, i) => (
                   <div 
@@ -2028,7 +2065,7 @@ export default function BrokerDashboard() {
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={propertyTypeData}
+                            data={dashboardStats.pieData}
                             cx="50%"
                             cy="50%"
                             innerRadius={70}
@@ -2036,7 +2073,7 @@ export default function BrokerDashboard() {
                             paddingAngle={8}
                             dataKey="value"
                           >
-                            {propertyTypeData.map((entry, index) => (
+                            {dashboardStats.pieData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
@@ -2045,10 +2082,10 @@ export default function BrokerDashboard() {
                       </ResponsiveContainer>
                     </div>
                     <div className="space-y-4">
-                      {propertyTypeData.map((item, i) => (
+                      {dashboardStats.pieData.map((item, i) => (
                         <div key={i} className="flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 transition-all">
                           <div className="flex items-center gap-3">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
                             <span className="text-sm text-gray-600 font-bold">{item.name}</span>
                           </div>
                           <span className="text-sm font-black text-gray-900">{item.value}%</span>
