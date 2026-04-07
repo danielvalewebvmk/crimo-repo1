@@ -100,6 +100,8 @@ export default function PropertyDetail() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [modalImageIndex, setModalImageIndex] = useState(0);
   const [showControls, setShowControls] = useState(false);
+  const [isNeighborhoodExpanded, setIsNeighborhoodExpanded] = useState(false);
+  const [activePriceTab, setActivePriceTab] = useState(0);
 
   const propertyData = properties.find(p => p.id.toString() === id) || properties[0];
   
@@ -295,7 +297,7 @@ export default function PropertyDetail() {
       </div>
 
       {/* Hero Gallery */}
-      <section className="relative h-screen w-full bg-brancobg overflow-hidden">
+      <section className="relative h-screen w-full bg-white overflow-hidden">
         {(!showFloorPlan && property.images[activeImage] && property.images[activeImage].includes('pe07Ikg.png')) ? (
           <div className="w-full h-full flex flex-col items-center justify-center relative">
             <img 
@@ -349,7 +351,7 @@ export default function PropertyDetail() {
         </div>
 
         {/* Bottom Gradient Overlay */}
-        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-brancobg to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-white to-transparent pointer-events-none" />
         
         {/* Navigation Arrows - Removed as requested */}
         <AnimatePresence>
@@ -515,7 +517,7 @@ export default function PropertyDetail() {
             <div className="space-y-6 relative">
               <div className="flex flex-col md:flex-row justify-between items-start gap-4">
                 <div className="space-y-2">
-                  <h1 className="text-4xl md:text-5xl font-bold text-marromescuro tracking-tight">{property.title}</h1>
+                  <h1 className="text-4xl md:text-5xl font-serif font-bold text-marromescuro leading-tight italic tracking-tight drop-shadow-sm">{property.title}</h1>
                   <div className="flex flex-wrap items-center gap-2 text-marromescuro/40">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-5 h-5 text-terracota" />
@@ -535,38 +537,36 @@ export default function PropertyDetail() {
 
                 {property.code && (
                   <div className="flex flex-col items-start md:items-end pt-2 w-full md:w-auto border-t md:border-t-0 border-marromescuro/10 mt-4 md:mt-0 pt-4 md:pt-2">
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl md:text-3xl font-black text-[#8FA603] tracking-tighter leading-none">{property.code}</span>
+                    <div className="flex items-center gap-4 text-marromescuro">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-marromescuro/30">Cod.</span>
+                        <Home className="w-3 h-3 text-marromescuro/20" />
+                      </div>
                       
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-marromescuro/30">Cod.</span>
-                          <Home className="w-3 h-3 text-marromescuro/20" />
-                        </div>
+                      <span className="text-2xl md:text-3xl font-black tracking-tighter leading-none">{property.code}</span>
+                      
+                      <div className="relative group/copy">
+                        <button 
+                          onClick={() => handleCopyCode(property.code)}
+                          className="p-2 hover:bg-marromescuro/10 rounded-xl transition-all group"
+                        >
+                          <Copy className="w-4 h-4 text-marromescuro" />
+                        </button>
                         
-                        <div className="relative group/copy">
-                          <button 
-                            onClick={() => handleCopyCode(property.code)}
-                            className="p-2 hover:bg-[#8FA603]/10 rounded-xl transition-all group"
-                          >
-                            <Copy className="w-4 h-4 text-[#8FA603]" />
-                          </button>
-                          
-                          <AnimatePresence>
-                            {codeCopied && (
-                              <motion.div 
-                                initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                                className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#1A1A1A] text-white text-[10px] font-bold px-4 py-2.5 rounded-xl shadow-2xl z-50 whitespace-nowrap flex items-center gap-2"
-                              >
-                                <Check className="w-3 h-3 text-[#8FA603]" />
-                                Copiado!
-                                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1A1A1A]" />
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
+                        <AnimatePresence>
+                          {codeCopied && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                              className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#1A1A1A] text-white text-[10px] font-bold px-4 py-2.5 rounded-xl shadow-2xl z-50 whitespace-nowrap flex items-center gap-2"
+                            >
+                              <Check className="w-3 h-3 text-[#8FA603]" />
+                              Copiado!
+                              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#1A1A1A]" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
                   </div>
@@ -634,90 +634,175 @@ export default function PropertyDetail() {
             </div>
           </div>
 
-          <div className="lg:col-span-1 p-8 bg-marromescuro/5 rounded-[32px] space-y-6">
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-marromescuro/30 font-bold">Valor do Investimento</span>
-              <div className="flex items-center justify-between gap-4">
-                <h2 className="text-3xl font-bold text-marromescuro">{property.price}</h2>
-                <div className="flex items-center gap-2 ml-[2px] mr-[-2px] mt-[-18px] relative">
-                  <button 
-                    onClick={() => setShowShareOptions(!showShareOptions)}
-                    className="py-2 px-2 hover:bg-terracota/10 rounded-full transition-colors group/share ml-0 mr-0"
-                    title="Compartilhar"
-                  >
-                    <Share2 className="w-6 h-6 text-terracota group-hover/share:scale-110 transition-all" />
-                  </button>
+          <div className="lg:col-span-1 p-8 bg-white border border-marromescuro/10 rounded-[32px] space-y-6">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-xs uppercase tracking-wider text-marromescuro font-helvetica font-bold">Valores do Investimento</span>
+              <div className="flex items-center gap-2 relative">
+                <button 
+                  onClick={() => setShowShareOptions(!showShareOptions)}
+                  className="py-2 px-2 hover:bg-terracota/10 rounded-full transition-colors group/share ml-0 mr-0"
+                  title="Compartilhar"
+                >
+                  <Share2 className="w-6 h-6 text-terracota group-hover/share:scale-110 transition-all" />
+                </button>
 
-                  <AnimatePresence>
-                    {showShareOptions && (
-                      <>
-                        <div 
-                          className="fixed inset-0 z-40" 
-                          onClick={() => setShowShareOptions(false)}
-                        />
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-marromescuro/5 p-2 z-50 overflow-hidden"
+                <AnimatePresence>
+                  {showShareOptions && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => setShowShareOptions(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-marromescuro/5 p-2 z-50 overflow-hidden"
+                      >
+                        <button
+                          onClick={handleShareWhatsApp}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-marromescuro/5 rounded-xl transition-colors text-marromescuro font-medium text-sm"
                         >
-                          <button
-                            onClick={handleShareWhatsApp}
-                            className="w-full flex items-center gap-3 p-3 hover:bg-marromescuro/5 rounded-xl transition-colors text-marromescuro font-medium text-sm"
-                          >
-                            <div className="p-2 bg-green-500/10 rounded-lg">
-                              <MessageCircle className="w-4 h-4 text-green-600" />
-                            </div>
-                            WhatsApp
-                          </button>
-                          <button
-                            onClick={handleShareFacebook}
-                            className="w-full flex items-center gap-3 p-3 hover:bg-marromescuro/5 rounded-xl transition-colors text-marromescuro font-medium text-sm"
-                          >
-                            <div className="p-2 bg-blue-600/10 rounded-lg">
-                              <Facebook className="w-4 h-4 text-blue-600" />
-                            </div>
-                            Facebook
-                          </button>
-                          <button
-                            onClick={handleShareInstagram}
-                            className="w-full flex items-center gap-3 p-3 hover:bg-marromescuro/5 rounded-xl transition-colors text-marromescuro font-medium text-sm"
-                          >
-                            <div className="p-2 bg-pink-600/10 rounded-lg">
-                              <Instagram className="w-4 h-4 text-pink-600" />
-                            </div>
-                            Instagram
-                          </button>
-                          <button
-                            onClick={handleCopyLink}
-                            className="w-full flex items-center gap-3 p-3 hover:bg-marromescuro/5 rounded-xl transition-colors text-marromescuro font-medium text-sm"
-                          >
-                            <div className="p-2 bg-marromescuro/5 rounded-lg">
-                              {copied ? <Check className="w-4 h-4 text-green-600" /> : <LinkIcon className="w-4 h-4 text-marromescuro" />}
-                            </div>
-                            {copied ? 'Copiado!' : 'Copiar Link'}
-                          </button>
-                        </motion.div>
-                      </>
-                    )}
-                  </AnimatePresence>
+                          <div className="p-2 bg-green-500/10 rounded-lg">
+                            <MessageCircle className="w-4 h-4 text-green-600" />
+                          </div>
+                          WhatsApp
+                        </button>
+                        <button
+                          onClick={handleShareFacebook}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-marromescuro/5 rounded-xl transition-colors text-marromescuro font-medium text-sm"
+                        >
+                          <div className="p-2 bg-blue-600/10 rounded-lg">
+                            <Facebook className="w-4 h-4 text-blue-600" />
+                          </div>
+                          Facebook
+                        </button>
+                        <button
+                          onClick={handleShareInstagram}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-marromescuro/5 rounded-xl transition-colors text-marromescuro font-medium text-sm"
+                        >
+                          <div className="p-2 bg-pink-600/10 rounded-lg">
+                            <Instagram className="w-4 h-4 text-pink-600" />
+                          </div>
+                          Instagram
+                        </button>
+                        <button
+                          onClick={handleCopyLink}
+                          className="w-full flex items-center gap-3 p-3 hover:bg-marromescuro/5 rounded-xl transition-colors text-marromescuro font-medium text-sm"
+                        >
+                          <div className="p-2 bg-marromescuro/5 rounded-lg">
+                            {copied ? <Check className="w-4 h-4 text-green-600" /> : <LinkIcon className="w-4 h-4 text-marromescuro" />}
+                          </div>
+                          {copied ? 'Copiado!' : 'Copiar Link'}
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
 
-                  <button 
-                    onClick={(e) => toggleFavorite(property.id, e)}
-                    className="p-2 hover:bg-terracota/10 rounded-full transition-colors group/fav"
-                    title="Favoritar"
-                  >
-                    <Heart 
-                      className={`w-6 h-6 transition-all ${favorites.includes(property.id) ? 'fill-marromescuro text-marromescuro' : 'text-terracota fill-terracota/10 group-hover/fav:fill-terracota/30'}`} 
-                    />
-                  </button>
-                </div>
+                <button 
+                  onClick={(e) => toggleFavorite(property.id, e)}
+                  className="p-2 hover:bg-terracota/10 rounded-full transition-colors group/fav"
+                  title="Favoritar"
+                >
+                  <Heart 
+                    className={`w-6 h-6 transition-all ${favorites.includes(property.id) ? 'fill-marromescuro text-marromescuro' : 'text-terracota fill-terracota/10 group-hover/fav:fill-terracota/30'}`} 
+                  />
+                </button>
               </div>
             </div>
+
+            {/* Tabs Section */}
+            <div className="space-y-4">
+              <div className="flex p-1 bg-white border border-marromescuro/10 rounded-2xl">
+                {property.listingType === 'aluguel' ? (
+                  <>
+                    <button 
+                      onClick={() => setActivePriceTab(0)}
+                      className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all ${activePriceTab === 0 ? 'bg-white text-marromescuro shadow-sm' : 'text-marromescuro/40 hover:text-marromescuro/60'}`}
+                    >
+                      Aluguel
+                    </button>
+                    <button 
+                      onClick={() => setActivePriceTab(1)}
+                      className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all ${activePriceTab === 1 ? 'bg-white text-marromescuro shadow-sm' : 'text-marromescuro/40 hover:text-marromescuro/60'}`}
+                    >
+                      Mensal
+                    </button>
+                    <button 
+                      onClick={() => setActivePriceTab(2)}
+                      className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all ${activePriceTab === 2 ? 'bg-white text-marromescuro shadow-sm' : 'text-marromescuro/40 hover:text-marromescuro/60'}`}
+                    >
+                      Total
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button 
+                      onClick={() => setActivePriceTab(0)}
+                      className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all ${activePriceTab === 0 ? 'bg-white text-marromescuro shadow-sm' : 'text-marromescuro/40 hover:text-marromescuro/60'}`}
+                    >
+                      Imóvel
+                    </button>
+                    <button 
+                      onClick={() => setActivePriceTab(1)}
+                      className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all ${activePriceTab === 1 ? 'bg-white text-marromescuro shadow-sm' : 'text-marromescuro/40 hover:text-marromescuro/60'}`}
+                    >
+                      Mensal
+                    </button>
+                    <button 
+                      onClick={() => setActivePriceTab(2)}
+                      className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all ${activePriceTab === 2 ? 'bg-white text-marromescuro shadow-sm' : 'text-marromescuro/40 hover:text-marromescuro/60'}`}
+                    >
+                      Anual
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div className="space-y-1 min-h-[100px] flex flex-col justify-center p-4 bg-white/40 rounded-2xl border border-marromescuro/5">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activePriceTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className="text-xs uppercase tracking-wider text-marromescuro font-helvetica font-bold">
+                      {property.listingType === 'aluguel' ? (
+                        activePriceTab === 0 ? 'Valor para alugar' : activePriceTab === 1 ? 'IPTU+Seguro' : 'Total Mensal'
+                      ) : (
+                        activePriceTab === 0 ? 'Valor do Imóvel' : activePriceTab === 1 ? 'Condomínio' : 'Valor Anual (Total Estimado)'
+                      )}
+                    </span>
+                    <h2 className="text-3xl font-bold text-marromescuro">
+                      {property.listingType === 'aluguel' ? (
+                        activePriceTab === 0 ? property.price : 
+                        activePriceTab === 1 ? `R$ ${(((parseInt(property.iptu?.replace(/\D/g, '') || '0') || 0) + (parseInt(property.insurance?.replace(/\D/g, '') || '0') || 0)) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 
+                        `R$ ${(((parseInt(property.price?.replace(/\D/g, '') || '0') || 0) + (parseInt(property.iptu?.replace(/\D/g, '') || '0') || 0) + (parseInt(property.insurance?.replace(/\D/g, '') || '0') || 0) + (parseInt(property.condoFee?.replace(/\D/g, '') || '0') || 0)) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      ) : (
+                        activePriceTab === 0 ? property.price : 
+                        activePriceTab === 1 ? (property.condoFee || 'R$ 0,00') : 
+                        `R$ ${(((parseInt(property.price?.replace(/\D/g, '') || '0') || 0) + (parseInt(property.condoFee?.replace(/\D/g, '') || '0') || 0) * 12 + (parseInt(property.iptu?.replace(/\D/g, '') || '0') || 0)) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      )}
+                    </h2>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              <div className="flex items-start gap-2 p-3 bg-white/50 rounded-xl border border-marromescuro/5">
+                <Info className="w-3.5 h-3.5 text-marromescuro/30 shrink-0 mt-0.5" />
+                <p className="text-[9px] text-marromescuro/40 leading-relaxed font-medium">
+                  Valores sujeitos a variações sem aviso prévio. Taxas como condomínio e IPTU podem sofrer alterações.
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-3">
               <button 
                 onClick={() => setIsScheduleModalOpen(true)}
-                className="w-full py-4 bg-brand-rust text-white rounded-2xl font-bold hover:bg-brand-rust/90 transition-all shadow-xl shadow-brand-rust/10 flex items-center justify-center gap-3"
+                className="w-full py-4 bg-marromescuro text-white rounded-2xl font-bold hover:bg-marromescuro/90 transition-all shadow-xl shadow-marromescuro/10 flex items-center justify-center gap-3"
               >
                 <div className="relative flex items-center justify-center">
                   <Home className="w-6 h-6" />
@@ -726,6 +811,13 @@ export default function PropertyDetail() {
                   </div>
                 </div>
                 Agendar visita
+              </button>
+              <button 
+                onClick={() => navigate(`/proposta-compra/${property.id}`)}
+                className="w-full py-4 bg-white text-marromescuro border border-marromescuro/10 rounded-2xl font-bold hover:bg-marromescuro/5 transition-all flex items-center justify-center gap-3 shadow-lg"
+              >
+                <FileText className="w-6 h-6 text-terracota" />
+                Simular financiamento
               </button>
             </div>
           </div>
@@ -738,14 +830,6 @@ export default function PropertyDetail() {
               <h2 className="text-2xl font-bold text-marromescuro">Sobre o imóvel</h2>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-brand-rust/20">
-                    <img 
-                      src="https://i.imgur.com/gS4N5wX.jpeg" 
-                      alt="Corretor Associado" 
-                      className="w-full h-full object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
                   <p className="text-xs font-bold text-marromescuro/40 uppercase tracking-widest">Informações do corretor associado</p>
                 </div>
                 <p className="text-marromescuro/70 leading-relaxed text-sm">
@@ -779,7 +863,7 @@ export default function PropertyDetail() {
                   </div>
                 )}
 
-                <div className="flex items-start gap-3 p-4 bg-marromescuro/5 rounded-xl border border-marromescuro/10">
+                <div className="flex items-start gap-3 p-4 bg-white rounded-xl border border-marromescuro/10">
                   <Info className="w-5 h-5 text-marromescuro/30 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-marromescuro/40 leading-relaxed">
                     Estas informações refletem a opinião do corretor associado e não necessariamente da Coelho da Fonseca, que não se responsabiliza por eventuais divergências ou prejuízos decorrentes do uso dessas informações.
@@ -814,7 +898,7 @@ export default function PropertyDetail() {
                       setModalImageIndex(5);
                       setIsModalOpen(true);
                     }}
-                    className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-marromescuro/5 flex flex-col items-center justify-center text-marromescuro/30 gap-2 cursor-pointer hover:bg-marromescuro/10 transition-colors"
+                    className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-white border border-marromescuro/10 flex flex-col items-center justify-center text-marromescuro/30 gap-2 cursor-pointer hover:bg-marromescuro/5 transition-colors"
                   >
                     <div className="grid grid-cols-2 gap-1">
                       <div className="w-2 h-2 bg-marromescuro/20 rounded-sm"></div>
@@ -831,45 +915,63 @@ export default function PropertyDetail() {
 
             <section className="space-y-8">
               <h2 className="text-2xl font-bold text-marromescuro">Localização</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                <div className="rounded-3xl overflow-hidden shadow-2xl">
-                  <img 
-                    src={condo && condo.images && condo.images.length > 0 ? condo.images[0] : property.neighborhood.image} 
-                    alt={condo ? condo.name : "Neighborhood"} 
-                    className="w-full aspect-square object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <div className="space-y-6">
-                  <h3 className="text-2xl font-bold text-marromescuro">
-                    {condo ? condo.name : property.neighborhood.title}
-                  </h3>
-                  <p className="text-marromescuro/70 text-sm leading-relaxed">
-                    {condo ? condo.bio : property.neighborhood.description}
-                  </p>
-                  
-                  {condo ? (
+              <div className="bg-white p-8 rounded-[32px] shadow-sm border border-marromescuro/5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                  <div className="rounded-3xl overflow-hidden shadow-2xl">
+                    <img 
+                      src={condo && condo.images && condo.images.length > 0 ? condo.images[0] : property.neighborhood.image} 
+                      alt={condo ? condo.name : "Neighborhood"} 
+                      className="w-full aspect-square object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <div className="space-y-6 flex flex-col justify-center h-full">
                     <div className="space-y-4">
-                      <Link 
-                        to={`/condominio/${condo.id}`}
-                        className="inline-flex items-center gap-2 text-xs font-bold text-terracota hover:text-marromescuro transition-colors mt-4"
-                      >
-                        Ver detalhes do condomínio
-                        <ChevronRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold text-marromescuro/40 uppercase tracking-widest">Gastronomia</p>
-                        <p className="text-xs text-marromescuro/70 font-medium">{property.neighborhood.gastronomy}</p>
+                      <h3 className="text-2xl md:text-3xl font-serif font-bold text-marromescuro italic tracking-tight">
+                        {condo ? condo.name : property.neighborhood.title}
+                      </h3>
+                      <div className="relative">
+                        <p className={`text-marromescuro/70 text-sm leading-relaxed ${!isNeighborhoodExpanded ? 'line-clamp-4 md:line-clamp-6' : ''}`}>
+                          {condo ? condo.bio : property.neighborhood.description}
+                        </p>
+                        <button 
+                          onClick={() => setIsNeighborhoodExpanded(!isNeighborhoodExpanded)}
+                          className="text-terracota text-xs font-bold hover:text-marromescuro transition-colors mt-2 flex items-center gap-1"
+                        >
+                          {isNeighborhoodExpanded ? 'Ler menos' : 'Ler mais'}
+                          <motion.div
+                            animate={{ rotate: isNeighborhoodExpanded ? 180 : 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <ChevronRight className="w-3 h-3 rotate-90" />
+                          </motion.div>
+                        </button>
                       </div>
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold text-marromescuro/40 uppercase tracking-widest">Clubes</p>
-                        <p className="text-xs text-marromescuro/70 font-medium">{property.neighborhood.clubs}</p>
-                      </div>
                     </div>
-                  )}
+                    
+                    {condo ? (
+                      <div className="space-y-4">
+                        <Link 
+                          to={`/condominio/${condo.id}`}
+                          className="inline-flex items-center gap-2 text-xs font-bold text-terracota hover:text-marromescuro transition-colors mt-4"
+                        >
+                          Ver detalhes do condomínio
+                          <ChevronRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-bold text-marromescuro/40 uppercase tracking-widest">Gastronomia</p>
+                          <p className="text-xs text-marromescuro/70 font-medium">{property.neighborhood.gastronomy}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-[10px] font-bold text-marromescuro/40 uppercase tracking-widest">Clubes</p>
+                          <p className="text-xs text-marromescuro/70 font-medium">{property.neighborhood.clubs}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
@@ -878,7 +980,7 @@ export default function PropertyDetail() {
           {/* Right Column: Sidebar */}
           <div className="space-y-6">
             {/* Agent Card */}
-            <div className="bg-white rounded-3xl border border-marromescuro/5 shadow-xl p-8 space-y-6 text-center sticky top-40">
+            <div className="bg-white rounded-3xl border border-marromescuro/10 shadow-xl p-8 space-y-6 text-center sticky top-40">
               <div 
                 className="relative w-24 h-24 mx-auto group/agent"
                 onMouseEnter={() => setIsAgentHovered(true)}
@@ -945,15 +1047,18 @@ export default function PropertyDetail() {
                 >
                   Falar com {property.agent.name.split(' ')[0]}
                 </button>
-                <button className="w-full py-4 bg-white text-marromescuro border border-marromescuro/5 rounded-xl font-bold hover:bg-marromescuro/5 transition-all flex items-center justify-center gap-2">
-                  <Headset className="w-5 h-5" />
+                <button 
+                  onClick={() => window.location.href = 'mailto:suporte@crimoveisdeluxo.com.br'}
+                  className="w-full py-4 bg-white text-marromescuro border border-marromescuro/5 rounded-xl font-bold hover:bg-marromescuro/5 transition-all flex items-center justify-center gap-2"
+                >
+                  <Mail className="w-5 h-5" />
                   Falar com a CR
                 </button>
               </div>
             </div>
 
             {/* Financing Card */}
-            <div className="bg-white rounded-3xl border border-marromescuro/5 shadow-xl p-8 space-y-6 text-center sticky top-[540px]">
+            <div className="bg-white rounded-3xl border border-marromescuro/10 shadow-xl p-8 space-y-6 text-center sticky top-[540px]">
               <div className="flex justify-center gap-4">
                 <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-xs">Itaú</div>
                 <div className="w-10 h-10 bg-marromescuro rounded-lg flex items-center justify-center text-white">
@@ -975,7 +1080,7 @@ export default function PropertyDetail() {
 
         {/* Related Properties */}
         <section className="mt-24 space-y-12">
-          <h2 className="text-2xl font-serif font-bold text-marromescuro">Quem viu este imóvel também se interessou por esses:</h2>
+          <h2 className="text-2xl font-helvetica font-bold text-marromescuro">Quem viu este imóvel também se interessou por esses:</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {RELATED_PROPERTIES.map((prop) => (
               <PropertyCard 
@@ -994,7 +1099,7 @@ export default function PropertyDetail() {
 
         {/* Recent Discoveries */}
         <section className="mt-24 space-y-12">
-          <h2 className="text-2xl font-serif font-bold text-marromescuro">Ainda pensando neles? <span className="text-marromescuro/40 font-sans font-normal">Revisite suas últimas descobertas</span></h2>
+          <h2 className="text-2xl font-helvetica font-bold text-marromescuro">Ainda pensando neles? <span className="text-marromescuro/40 font-sans font-normal">Revisite suas últimas descobertas</span></h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {RELATED_PROPERTIES.map((prop) => (
               <PropertyCard 
@@ -1060,7 +1165,7 @@ export default function PropertyDetail() {
                               type="date" 
                               value={scheduleData.date}
                               onChange={(e) => setScheduleData({ ...scheduleData, date: e.target.value })}
-                              className="w-full pl-12 pr-4 py-4 bg-marromescuro/5 border-none rounded-2xl focus:ring-2 focus:ring-brand-rust/20 transition-all text-marromescuro font-medium"
+                              className="w-full pl-12 pr-4 py-4 bg-white border border-marromescuro/10 rounded-2xl focus:ring-2 focus:ring-brand-rust/20 transition-all text-marromescuro font-medium"
                             />
                           </div>
                         </div>
@@ -1072,7 +1177,7 @@ export default function PropertyDetail() {
                               type="time" 
                               value={scheduleData.time}
                               onChange={(e) => setScheduleData({ ...scheduleData, time: e.target.value })}
-                              className="w-full pl-12 pr-4 py-4 bg-marromescuro/5 border-none rounded-2xl focus:ring-2 focus:ring-brand-rust/20 transition-all text-marromescuro font-medium"
+                              className="w-full pl-12 pr-4 py-4 bg-white border border-marromescuro/10 rounded-2xl focus:ring-2 focus:ring-brand-rust/20 transition-all text-marromescuro font-medium"
                             />
                           </div>
                         </div>
@@ -1139,7 +1244,7 @@ export default function PropertyDetail() {
                                 placeholder="(00) 00000-0000"
                                 value={scheduleData.phone}
                                 onChange={(e) => setScheduleData({ ...scheduleData, phone: formatPhone(e.target.value) })}
-                                className="w-full pl-12 pr-4 py-4 bg-marromescuro/5 border-none rounded-2xl focus:ring-2 focus:ring-brand-rust/20 transition-all text-marromescuro font-medium"
+                                className="w-full pl-12 pr-4 py-4 bg-white border border-marromescuro/10 rounded-2xl focus:ring-2 focus:ring-brand-rust/20 transition-all text-marromescuro font-medium"
                               />
                             </div>
                           </div>

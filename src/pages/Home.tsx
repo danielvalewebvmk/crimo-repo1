@@ -118,7 +118,7 @@ export default function Home() {
           </AnimatePresence>
           
           {/* Bottom Gradient Overlay */}
-          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-brancobg to-transparent pointer-events-none z-1" />
+          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-white to-transparent pointer-events-none z-1" />
         </div>
 
         <div className="relative z-10 h-full flex flex-col items-center justify-center text-white px-6">
@@ -139,7 +139,7 @@ export default function Home() {
       </section>
 
       {/* Gallery Section */}
-      <section className="bg-brancobg py-20 overflow-hidden">
+      <section className="bg-white py-20 overflow-hidden">
         <div className="max-w-[1800px] mx-auto px-6 mb-10">
           <div className="flex items-center gap-3 text-brand-dark">
             <div className="bg-white p-2 rounded-lg shadow-sm border border-brand-dark/5">
@@ -168,29 +168,13 @@ export default function Home() {
         </div>
       </section>
       {/* Search Category Menu */}
-      <section className="bg-brancobg pb-20 pl-4 md:pl-6 flex items-center relative">
+      <section className="bg-white pb-20 pl-4 md:pl-6 flex items-center relative">
         <div className="w-full max-w-[1800px] ml-auto relative">
-          {/* Decorative Plant - Fixed to the menu container for perfect responsiveness */}
-          <motion.div
-            initial={{ opacity: 0, x: -100 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="absolute left-[-180px] bottom-[-12px] z-40 hidden lg:block pointer-events-none"
-          >
-            <img 
-              src="https://i.imgur.com/E2ufewr.png" 
-              alt="Plant" 
-              className="w-[450px] h-auto drop-shadow-2xl"
-              referrerPolicy="no-referrer"
-            />
-          </motion.div>
-
-          <div className="relative bg-gradient-to-r from-[#300B00] via-[#5C1D0D] to-[#A64529] rounded-l-[40px] md:rounded-l-[100px] py-8 px-6 md:py-10 md:px-12 flex flex-col md:flex-row items-center gap-8 md:gap-12 shadow-2xl">
+          <div className="relative bg-white border border-marromescuro/10 rounded-l-[40px] md:rounded-l-[100px] py-8 px-6 md:py-10 md:px-12 flex flex-col md:flex-row items-center gap-8 md:gap-12 shadow-2xl">
             {/* Title Section */}
             <div className="flex flex-col w-full md:w-auto text-center md:text-left min-w-0 md:min-w-[200px]">
-              <span className="text-[#FFD671] text-lg md:text-[26px] font-medium leading-tight pl-0 md:pl-[52px] pr-[-5px] pt-[4px] ml-0 md:ml-[10px] mr-[13px] mt-[-3px] mb-[-12px]">O que você está</span>
-              <h2 className="text-[#FFD671] text-2xl md:text-4xl font-bold leading-tight pl-0 md:pl-[59px] ml-0 md:ml-[9px] mr-[-22px] mb-0">procurando?</h2>
+              <span className="text-marromescuro text-lg md:text-[26px] font-medium leading-tight pl-0 md:pl-[52px] pr-[-5px] pt-[4px] ml-0 md:ml-[10px] mr-[13px] mt-[-3px] mb-[-12px]">O que você está</span>
+              <h2 className="text-marromescuro text-2xl md:text-4xl font-bold leading-tight pl-0 md:pl-[59px] ml-0 md:ml-[9px] mr-[-22px] mb-0">procurando?</h2>
             </div>
 
             {/* Categories Wrapper for Mobile Layout - Using md:contents to restore original desktop spacing */}
@@ -198,7 +182,7 @@ export default function Home() {
               {/* Navigation Left */}
               <button 
                 onClick={() => scroll('left')}
-                className="bg-[#FFFCEF]/20 hover:bg-[#FFFCEF]/30 p-2 rounded-full text-[#FFFCEF] transition-all z-20 cursor-pointer pt-[8px] ml-0 md:ml-[-14px] shrink-0"
+                className="bg-marromescuro/5 hover:bg-marromescuro/10 p-2 rounded-full text-marromescuro transition-all z-20 cursor-pointer pt-[8px] ml-0 md:ml-[-14px] shrink-0"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
@@ -214,12 +198,12 @@ export default function Home() {
                     onClick={() => navigate(`/categoria/${item.slug}`)}
                     className="flex flex-col items-center gap-3 min-w-[100px] md:min-w-[130px] cursor-pointer shrink-0 transition-all group"
                   >
-                    <div className="text-[#FFD671] transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
+                    <div className="text-terracota transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-1">
                       <item.icon className="w-10 h-10 md:w-14 md:h-14 stroke-[1.5px]" />
                     </div>
                     <div className="text-center leading-tight transition-all duration-300 group-hover:translate-y-[-2px]">
-                      <p className="text-[#FFFCEF]/60 text-[8px] md:text-[10px] uppercase tracking-wider group-hover:text-[#FFFCEF]/80">{item.label1}</p>
-                      <p className="text-[#FFFCEF] text-xs md:text-sm font-bold group-hover:text-[#FFD671]">{item.label2}</p>
+                      <p className="text-marromescuro/60 text-[8px] md:text-[10px] uppercase tracking-wider group-hover:text-marromescuro/80">{item.label1}</p>
+                      <p className="text-marromescuro text-xs md:text-sm font-bold group-hover:text-terracota">{item.label2}</p>
                     </div>
                   </button>
                 ))}
@@ -228,7 +212,7 @@ export default function Home() {
               {/* Navigation Right */}
               <button 
                 onClick={() => scroll('right')}
-                className="bg-[#FFFCEF]/20 hover:bg-[#FFFCEF]/30 p-2 rounded-full text-[#FFFCEF] transition-all z-20 cursor-pointer shrink-0"
+                className="bg-marromescuro/5 hover:bg-marromescuro/10 p-2 rounded-full text-marromescuro transition-all z-20 cursor-pointer shrink-0"
               >
                 <ChevronRight className="w-6 h-6" />
               </button>

@@ -48,6 +48,19 @@ const INITIAL_CONDOS: Condo[] = [
       'https://images.unsplash.com/photo-1518780664697-55e3ad937233?auto=format&fit=crop&w=1200&q=80'
     ],
     location: 'Itaipava, Petrópolis'
+  },
+  {
+    id: 3,
+    name: 'Alphaville 2',
+    bio: 'O Alphaville 2 oferece uma experiência única de moradia, combinando segurança de ponta, lazer completo e contato direto com a natureza.',
+    images: [
+      'https://i.imgur.com/Gp90UvK.png',
+      'https://i.imgur.com/pe07Ikg.png',
+      'https://i.imgur.com/W10YtDm.png'
+    ],
+    location: 'Juiz de Fora - MG',
+    image360Url: 'https://i.imgur.com/Gp90UvK.png',
+    logoUrl: 'https://i.imgur.com/tn6v6kz.png'
   }
 ];
 

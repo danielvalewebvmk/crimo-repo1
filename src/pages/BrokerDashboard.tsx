@@ -5,8 +5,68 @@ import { useNavigate } from 'react-router-dom';
 import { useProperties } from '../context/PropertyContext';
 import { useBrokers } from '../context/BrokerContext';
 import { useCondos } from '../context/CondoContext';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { 
+  collection, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  updateDoc, 
+  deleteDoc, 
+  doc 
+} from 'firebase/firestore';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 import { 
   LayoutDashboard, 
   TrendingUp, 
@@ -170,6 +230,21 @@ export default function BrokerDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const userDropdownRef = React.useRef<HTMLDivElement>(null);
+  const [proposals, setProposals] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'proposals'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const proposalsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setProposals(proposalsData);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'proposals');
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -268,7 +343,10 @@ export default function BrokerDashboard() {
     hasSauna: false,
     code: '',
     listingType: 'venda' as 'venda' | 'aluguel',
-    condoId: 0
+    condoId: 0,
+    condoFee: '',
+    iptu: '',
+    insurance: ''
   });
 
   const [isCondoModalOpen, setIsCondoModalOpen] = useState(false);
@@ -309,6 +387,18 @@ export default function BrokerDashboard() {
     return code;
   };
 
+  const formatCurrency = (value: string) => {
+    const cleanValue = value.replace(/\D/g, '');
+    if (!cleanValue) return '';
+    const amount = parseInt(cleanValue) / 100;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
   const handlePriceChange = (value: string, type?: 'venda' | 'aluguel') => {
     const currentType = type || newPropertyData.listingType;
     const cleanValue = value.replace(/\D/g, '');
@@ -316,11 +406,17 @@ export default function BrokerDashboard() {
       setNewPropertyData({ ...newPropertyData, price: '', listingType: currentType });
       return;
     }
-    const formatted = new Intl.NumberFormat('pt-BR').format(parseInt(cleanValue));
+    const amount = parseInt(cleanValue) / 100;
+    const formatted = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
     const suffix = currentType === 'aluguel' ? ' / mês' : '';
     setNewPropertyData({ 
       ...newPropertyData, 
-      price: `R$ ${formatted}${suffix}`,
+      price: `${formatted}${suffix}`,
       listingType: currentType
     });
   };
@@ -405,7 +501,10 @@ export default function BrokerDashboard() {
       hasSauna: false,
       code: generateUniqueCode(),
       listingType: 'venda',
-      condoId: 0
+      condoId: 0,
+      condoFee: '',
+      iptu: '',
+      insurance: ''
     });
     setIsAddModalOpen(true);
   };
@@ -445,7 +544,10 @@ export default function BrokerDashboard() {
       hasSauna: property.hasSauna || false,
       code: property.code || generateUniqueCode(),
       listingType: property.listingType || 'venda',
-      condoId: property.condoId || 0
+      condoId: property.condoId || 0,
+      condoFee: property.condoFee || '',
+      iptu: property.iptu || '',
+      insurance: property.insurance || ''
     });
     setIsAddModalOpen(true);
   };
@@ -518,7 +620,10 @@ export default function BrokerDashboard() {
         hasSauna: false,
         code: '',
         listingType: 'venda' as 'venda' | 'aluguel',
-        condoId: 0
+        condoId: 0,
+        condoFee: '',
+        iptu: '',
+        insurance: ''
       });
     } catch (error) {
       console.error("Erro ao salvar imóvel:", error);
@@ -631,7 +736,7 @@ export default function BrokerDashboard() {
   };
 
   return (
-    <div className="h-screen bg-[#F9FAFB] flex flex-col lg:flex-row overflow-hidden">
+    <div className="h-screen bg-white flex flex-col lg:flex-row overflow-hidden">
       
       {/* Sidebar - Desktop & Mobile */}
       <aside className={`
@@ -656,6 +761,7 @@ export default function BrokerDashboard() {
             {[
               { id: 'overview', label: 'Visão Geral', icon: LayoutDashboard },
               { id: 'properties', label: 'Todos Imóveis', icon: Home },
+              { id: 'proposals', label: 'Propostas', icon: FileText },
               { id: 'condos', label: 'Condomínios', icon: ShieldCheck },
               { id: 'brokers', label: 'Corretores', icon: Users },
               { id: 'leads', label: 'Leads & Clientes', icon: Users },
@@ -691,7 +797,7 @@ export default function BrokerDashboard() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddModalOpen(false)}
-              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -720,13 +826,13 @@ export default function BrokerDashboard() {
                         className={`flex flex-col items-center gap-2 ${isEditing ? 'cursor-pointer' : ''}`}
                         onClick={() => isEditing && setCurrentStep(s)}
                       >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                          currentStep === s 
-                            ? 'bg-[#8FA603] text-white shadow-lg shadow-[#8FA603]/30 scale-110' 
-                            : currentStep > s 
-                              ? 'bg-[#8FA603]/20 text-[#8FA603]' 
-                              : 'bg-gray-100 text-gray-400'
-                        }`}>
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                                currentStep === s 
+                                  ? 'bg-[#8FA603] text-white shadow-lg shadow-[#8FA603]/30 scale-110' 
+                                  : currentStep > s 
+                                    ? 'bg-[#8FA603]/20 text-[#8FA603]' 
+                                    : 'bg-white border border-gray-200 text-gray-400'
+                              }`}>
                           {currentStep > s ? <CheckCircle2 className="w-6 h-6" /> : s}
                         </div>
                         <span className={`text-[10px] font-black uppercase tracking-tighter ${
@@ -737,7 +843,7 @@ export default function BrokerDashboard() {
                       </div>
                       {s < 5 && (
                         <div className={`flex-1 h-1 mx-4 rounded-full transition-all ${
-                          currentStep > s ? 'bg-[#8FA603]' : 'bg-gray-100'
+                          currentStep > s ? 'bg-[#8FA603]' : 'bg-white border border-gray-200'
                         }`} />
                       )}
                     </React.Fragment>
@@ -766,7 +872,7 @@ export default function BrokerDashboard() {
                               className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all border-2 ${
                                 newPropertyData.listingType === 'venda'
                                   ? 'bg-[#8FA603]/10 border-[#8FA603] text-[#8FA603]'
-                                  : 'bg-gray-50 border-transparent text-gray-400 hover:bg-gray-100'
+                                  : 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-50'
                               }`}
                             >
                               Venda
@@ -777,7 +883,7 @@ export default function BrokerDashboard() {
                               className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all border-2 ${
                                 newPropertyData.listingType === 'aluguel'
                                   ? 'bg-[#8FA603]/10 border-[#8FA603] text-[#8FA603]'
-                                  : 'bg-gray-50 border-transparent text-gray-400 hover:bg-gray-100'
+                                  : 'bg-white border border-gray-200 text-gray-400 hover:bg-gray-50'
                               }`}
                             >
                               Aluguel
@@ -792,7 +898,7 @@ export default function BrokerDashboard() {
                             value={newPropertyData.title}
                             onChange={(e) => setNewPropertyData({...newPropertyData, title: e.target.value})}
                             placeholder="Ex: Mansão Luxury"
-                            className="w-full bg-gray-50 border-none rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
+                            className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
                           />
                         </div>
                         <div className="space-y-2">
@@ -804,10 +910,69 @@ export default function BrokerDashboard() {
                             type="text" 
                             value={newPropertyData.price}
                             onChange={(e) => handlePriceChange(e.target.value)}
-                            placeholder={newPropertyData.listingType === 'aluguel' ? "Ex: R$ 4.500 / mês" : "Ex: R$ 3.500.000"}
-                            className="w-full bg-gray-50 border-none rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
+                            placeholder={newPropertyData.listingType === 'aluguel' ? "Ex: R$ 4.500,00 / mês" : "Ex: R$ 3.500.000,00"}
+                            className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
                           />
                         </div>
+
+                        {/* New Pricing Fields based on Listing Type */}
+                        {newPropertyData.listingType === 'venda' ? (
+                          <>
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Condomínio</label>
+                              <input 
+                                type="text" 
+                                value={newPropertyData.condoFee}
+                                onChange={(e) => setNewPropertyData({...newPropertyData, condoFee: formatCurrency(e.target.value)})}
+                                placeholder="Ex: R$ 1.200,00"
+                                className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Valor Anual (IPTU)</label>
+                              <input 
+                                type="text" 
+                                value={newPropertyData.iptu}
+                                onChange={(e) => setNewPropertyData({...newPropertyData, iptu: formatCurrency(e.target.value)})}
+                                placeholder="Ex: R$ 5.000,00"
+                                className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">IPTU (Mensal)</label>
+                              <input 
+                                type="text" 
+                                value={newPropertyData.iptu}
+                                onChange={(e) => setNewPropertyData({...newPropertyData, iptu: formatCurrency(e.target.value)})}
+                                placeholder="Ex: R$ 450,00"
+                                className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Seguro Incêndio (Mensal)</label>
+                              <input 
+                                type="text" 
+                                value={newPropertyData.insurance}
+                                onChange={(e) => setNewPropertyData({...newPropertyData, insurance: formatCurrency(e.target.value)})}
+                                placeholder="Ex: R$ 80,00"
+                                className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-xs font-bold text-gray-500 uppercase ml-1">Condomínio</label>
+                              <input 
+                                type="text" 
+                                value={newPropertyData.condoFee}
+                                onChange={(e) => setNewPropertyData({...newPropertyData, condoFee: formatCurrency(e.target.value)})}
+                                placeholder="Ex: R$ 1.200,00"
+                                className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all"
+                              />
+                            </div>
+                          </>
+                        )}
                         <div className="space-y-2">
                           <label className="text-xs font-bold text-gray-500 uppercase ml-1">Código do Imóvel (Automático)</label>
                           <div className="relative">
@@ -815,7 +980,7 @@ export default function BrokerDashboard() {
                               readOnly
                               type="text" 
                               value={newPropertyData.code}
-                              className="w-full bg-gray-100 border-none rounded-2xl py-3 px-4 text-sm font-bold text-[#8FA603] outline-none cursor-not-allowed"
+                              className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm font-bold text-[#8FA603] outline-none cursor-not-allowed"
                             />
                             <button 
                               type="button"
@@ -836,7 +1001,7 @@ export default function BrokerDashboard() {
                                 const val = parseInt(e.target.value);
                                 setNewPropertyData({...newPropertyData, condoId: val});
                               }}
-                              className="w-full bg-gray-50 border-none rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all appearance-none"
+                              className="w-full bg-white border border-gray-200 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-[#8FA603]/20 outline-none transition-all appearance-none"
                             >
                               <option value={0}>Nenhum Condomínio</option>
                               {condos.map(c => (
@@ -1777,7 +1942,7 @@ export default function BrokerDashboard() {
       {/* Overlay for mobile sidebar */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden cursor-pointer"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -1890,7 +2055,7 @@ export default function BrokerDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6 mb-8 lg:mb-10">
                 {[
                   { label: 'Volume em Carteira', value: dashboardStats.totalValue, icon: DollarSign, trend: '+12%', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                  { label: 'Leads Ativos', value: '842', icon: Users, trend: '+24%', color: 'text-blue-600', bg: 'bg-blue-50' },
+                  { label: 'Propostas Recebidas', value: proposals.length.toString(), icon: FileText, trend: '+8%', color: 'text-blue-600', bg: 'bg-blue-50' },
                   { label: 'Imóveis em Pauta', value: dashboardStats.totalProperties.toString(), icon: Home, trend: '+5%', color: 'text-amber-600', bg: 'bg-amber-50' },
                   { label: 'Taxa de Conversão', value: '4.2%', icon: TrendingUp, trend: '+2%', color: 'text-purple-600', bg: 'bg-purple-50' },
                 ].map((stat, i) => (
@@ -2319,22 +2484,123 @@ export default function BrokerDashboard() {
                       </div>
 
                       <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                        <button 
-                          onClick={() => handleEditCondo(condo)}
-                          className="px-4 py-2 bg-gray-50 rounded-xl text-gray-400 hover:text-[#8FA603] hover:bg-[#8FA603]/10 transition-all flex items-center gap-2 text-xs font-black"
-                        >
-                          <Edit className="w-4 h-4" /> Editar
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteCondo(condo.id)}
-                          className="p-2 bg-red-50 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-100 hover:shadow-md transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#8FA603]/10 rounded-xl border border-[#8FA603]/20">
+                            <Home className="w-3.5 h-3.5 text-[#8FA603]" />
+                            <span className="text-xs font-black text-[#8FA603]">
+                              {properties.filter(p => p.condoId === condo.id).length} {properties.filter(p => p.condoId === condo.id).length === 1 ? 'Imóvel' : 'Imóveis'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleEditCondo(condo)}
+                            className="p-2 bg-gray-50 rounded-xl text-gray-400 hover:text-[#8FA603] hover:bg-[#8FA603]/10 transition-all"
+                            title="Editar Condomínio"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteCondo(condo.id)}
+                            className="p-2 bg-red-50 rounded-xl text-red-400 hover:text-red-600 hover:bg-red-100 hover:shadow-md transition-all"
+                            title="Excluir Condomínio"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          ) : activeTab === 'proposals' ? (
+            <div className="space-y-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-black text-gray-900 mb-2">Propostas Recebidas</h1>
+                  <p className="text-sm lg:text-base text-gray-500 font-medium">Acompanhe e gerencie as propostas de compra dos seus clientes.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6">
+                {proposals.length === 0 ? (
+                  <div className="bg-white p-12 rounded-[40px] border border-gray-100 text-center shadow-sm">
+                    <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                      <FileText className="w-10 h-10 text-gray-300" />
+                    </div>
+                    <h3 className="text-xl font-black text-gray-900 mb-2">Nenhuma proposta ainda</h3>
+                    <p className="text-gray-500 font-medium">As propostas enviadas pelos clientes aparecerão aqui.</p>
+                  </div>
+                ) : (
+                  proposals.map((proposal) => (
+                    <div 
+                      key={proposal.id}
+                      className="bg-white p-6 lg:p-8 rounded-[32px] lg:rounded-[40px] shadow-sm border border-gray-100 hover:shadow-md transition-all group"
+                    >
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                        <div className="flex items-start gap-6">
+                          <div className="w-16 h-16 bg-[#8FA603]/10 rounded-2xl flex items-center justify-center text-[#8FA603] shrink-0">
+                            <DollarSign className="w-8 h-8" />
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <h3 className="text-lg font-black text-gray-900">{proposal.userName}</h3>
+                              <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full uppercase tracking-wider">
+                                {proposal.paymentMethod}
+                              </span>
+                              <span className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black rounded-full uppercase tracking-wider">
+                                {proposal.proposalValue}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-500 font-medium flex items-center gap-2">
+                              <Home className="w-4 h-4" /> {proposal.propertyTitle}
+                            </p>
+                            <div className="flex items-center gap-4 pt-2">
+                              <span className="text-xs text-gray-400 font-bold flex items-center gap-1">
+                                <Mail className="w-3 h-3" /> {proposal.userEmail}
+                              </span>
+                              <span className="text-xs text-gray-400 font-bold flex items-center gap-1">
+                                <Phone className="w-3 h-3" /> {proposal.userPhone}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                          <div className="text-right sm:mr-4">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Data do Envio</p>
+                            <p className="text-sm font-black text-gray-900">
+                              {proposal.createdAt?.toDate ? proposal.createdAt.toDate().toLocaleDateString('pt-BR') : 'Recentemente'}
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              if (window.confirm('Deseja excluir esta proposta?')) {
+                                deleteDoc(doc(db, 'proposals', proposal.id)).catch(err => handleFirestoreError(err, OperationType.DELETE, `proposals/${proposal.id}`));
+                              }
+                            }}
+                            className="p-4 bg-red-50 text-red-500 rounded-2xl hover:bg-red-100 transition-all shadow-sm"
+                            title="Excluir Proposta"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {proposal.observations && (
+                        <div className="mt-6 p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <MessageSquare className="w-3 h-3" /> Observações do Cliente
+                          </p>
+                          <p className="text-sm text-gray-600 font-medium leading-relaxed italic">
+                            "{proposal.observations}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           ) : activeTab === 'properties' ? (

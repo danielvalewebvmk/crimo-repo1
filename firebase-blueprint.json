@@ -75,9 +75,31 @@
       "type": "object",
       "properties": {
         "role": { "type": "string", "enum": ["admin", "user"] },
-        "email": { "type": "string", "format": "email" }
+        "email": { "type": "string", "format": "email" },
+        "favorites": { "type": "array", "items": { "type": "number" } }
       },
       "required": ["role", "email"]
+    },
+    "Proposal": {
+      "title": "Proposal",
+      "description": "A purchase proposal for a property",
+      "type": "object",
+      "properties": {
+        "propertyId": { "type": "string" },
+        "userId": { "type": "string" },
+        "brokerId": { "type": "string" },
+        "value": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "fgts": { "type": "boolean" },
+        "financing": { "type": "boolean" },
+        "permuta": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "userName": { "type": "string" },
+        "userPhone": { "type": "string" },
+        "userEmail": { "type": "string" }
+      },
+      "required": ["propertyId", "value", "userName", "userPhone", "userEmail"]
     }
   },
   "firestore": {
@@ -96,6 +118,10 @@
     "condos": {
       "schema": { "$ref": "#/entities/Condo" },
       "description": "Collection of all condos"
+    },
+    "proposals": {
+      "schema": { "$ref": "#/entities/Proposal" },
+      "description": "Collection of all purchase proposals"
     },
     "system_config": {
       "schema": {

@@ -53,7 +53,7 @@ export default function Contact() {
               <h3 className="text-xl font-bold text-brand-dark">Siga-nos</h3>
               <div className="flex gap-4">
                 {['Instagram', 'Facebook', 'LinkedIn', 'YouTube'].map((social) => (
-                  <button key={social} className="bg-white px-6 py-3 rounded-xl font-bold text-brand-dark/60 hover:bg-brand-rust hover:text-white transition-all shadow-sm">
+                  <button key={social} className="bg-white px-6 py-3 rounded-xl font-bold text-brand-dark/60 hover:bg-brand-rust hover:text-white transition-all shadow-sm cursor-pointer">
                     {social}
                   </button>
                 ))}
@@ -119,7 +119,7 @@ export default function Contact() {
                   className="w-full bg-brand-cream/50 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-brand-rust/20 transition-all resize-none"
                 ></textarea>
               </div>
-              <button className="w-full bg-brand-rust text-white py-5 rounded-2xl font-bold text-lg shadow-xl hover:bg-brand-rust/90 transition-all">
+              <button className="w-full bg-brand-rust text-white py-5 rounded-2xl font-bold text-lg shadow-xl hover:bg-brand-rust/90 transition-all cursor-pointer">
                 Enviar Mensagem
               </button>
             </form>

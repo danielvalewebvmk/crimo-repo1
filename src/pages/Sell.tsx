@@ -15,19 +15,14 @@ export default function Sell() {
               Oferecemos uma curadoria especializada e estratégias de marketing personalizadas para garantir que seu imóvel seja visto pelos compradores certos.
             </p>
             <div className="pt-4">
-              <button className="bg-brand-rust text-white px-10 py-4 rounded-full font-bold shadow-xl hover:bg-brand-rust/90 transition-all">
+              <button className="bg-brand-rust text-white px-10 py-4 rounded-full font-bold shadow-xl hover:bg-brand-rust/90 transition-all cursor-pointer">
                 Anunciar meu imóvel
               </button>
             </div>
           </div>
           <div className="relative">
-            <div className="aspect-[4/5] rounded-[48px] overflow-hidden shadow-2xl">
-              <img 
-                src="https://i.imgur.com/pe07Ikg.png" 
-                alt="Luxury Home" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+            <div className="aspect-[4/5] rounded-[48px] overflow-hidden shadow-2xl bg-brand-rust/5 flex items-center justify-center">
+              <Home className="w-32 h-32 text-brand-rust/10" />
             </div>
             <div className="absolute -bottom-10 -left-10 bg-white p-8 rounded-[32px] shadow-2xl hidden md:block max-w-xs space-y-4">
               <div className="bg-brand-rust/10 w-12 h-12 rounded-xl flex items-center justify-center">

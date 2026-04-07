@@ -32,7 +32,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[70]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[70] cursor-pointer"
           />
 
           {/* Menu Content */}
@@ -91,7 +91,10 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
                             className="overflow-hidden"
                           >
                             <div className="pl-14 pr-4 py-2 space-y-2">
-                              {condos.map(condo => (
+                              {condos
+                                .slice()
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map(condo => (
                                 <Link
                                   key={condo.id}
                                   to={`/condominio/${condo.id}`}

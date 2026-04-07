@@ -16,10 +16,12 @@ import Favorites from './pages/Favorites';
 import CategoryResults from './pages/CategoryResults';
 import BrokerDashboard from './pages/BrokerDashboard';
 import BrokerProfile from './pages/BrokerProfile';
+import PurchaseProposal from './pages/PurchaseProposal';
 import { PropertyProvider } from './context/PropertyContext';
 import { BrokerProvider } from './context/BrokerContext';
 import { CondoProvider } from './context/CondoContext';
 import CondoDetail from './pages/CondoDetail';
+import Condos from './pages/Condos';
 
 export default function App() {
   return (
@@ -33,7 +35,7 @@ export default function App() {
                 <Route path="comprar" element={<Buy />} />
                 <Route path="alugar" element={<Buy />} />
                 <Route path="vender" element={<Sell />} />
-                <Route path="condominios" element={<Buy />} />
+                <Route path="condominios" element={<Condos />} />
                 <Route path="condominio/:id" element={<CondoDetail />} />
                 <Route path="lancamentos" element={<Buy />} />
                 <Route path="exclusivos" element={<Buy />} />
@@ -44,6 +46,7 @@ export default function App() {
                 <Route path="favoritos" element={<Favorites />} />
                 <Route path="corretor/:id" element={<BrokerProfile />} />
                 <Route path="dashboard-corretor" element={<BrokerDashboard />} />
+                <Route path="proposta-compra/:id" element={<PurchaseProposal />} />
               </Route>
             </Routes>
           </BrowserRouter>

@@ -197,7 +197,7 @@ export default function SearchMenu({ isMenuOpen, setIsMenuOpen, isDesktop, negot
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsMenuOpen(false)}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55]"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55] cursor-pointer"
           />
           
           {/* Menu Content */}

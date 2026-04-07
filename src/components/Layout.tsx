@@ -8,24 +8,134 @@ import SearchMenu from './SearchMenu';
 import MobileNav from './MobileNav';
 import LoginModal from './LoginModal';
 import { useProperties } from '../context/PropertyContext';
+import { auth, db } from '../firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  // We don't necessarily want to crash the whole app for a favorite sync error
+  // but we log it for debugging.
+}
 
 export default function Layout() {
   const { properties } = useProperties();
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [negotiation, setNegotiation] = useState<'comprar' | 'alugar' | 'permuta'>('comprar');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [favorites, setFavorites] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem('assiss_favorites');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
   // Filter favorites to only include properties that actually exist
   const activeFavorites = useMemo(() => {
     return favorites.filter(id => properties.some(p => p.id === id));
   }, [favorites, properties]);
 
+  // Auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Sync favorites with Firestore when logged in
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    
+    // Listen for changes in Firestore
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        if (userData.favorites) {
+          // Merge with local favorites or just take Firestore ones?
+          // Usually Firestore is the source of truth for logged in users.
+          setFavorites(userData.favorites);
+        }
+      } else {
+        // If user doc doesn't exist, create it with current local favorites
+        const initialData = {
+          email: currentUser.email,
+          role: 'user',
+          favorites: favorites
+        };
+        setDoc(userDocRef, initialData).catch(err => handleFirestoreError(err, OperationType.WRITE, `users/${currentUser.uid}`));
+      }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, `users/${currentUser.uid}`);
+    });
+
+    return () => unsubscribe();
+  }, [currentUser]);
+
+  // Save to localStorage (fallback/guest) and Firestore (if logged in)
   useEffect(() => {
     localStorage.setItem('assiss_favorites', JSON.stringify(favorites));
-  }, [favorites]);
+
+    if (currentUser) {
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      // We use setDoc with merge: true to update just the favorites
+      setDoc(userDocRef, { favorites }, { merge: true })
+        .catch(err => handleFirestoreError(err, OperationType.WRITE, `users/${currentUser.uid}`));
+    }
+  }, [favorites, currentUser]);
 
   const clearFavorites = () => {
     setFavorites([]);
@@ -78,7 +188,7 @@ export default function Layout() {
   }, [location]);
 
   return (
-    <div className="min-h-screen bg-brand-cream selection:bg-brand-rust/20 font-sans overflow-x-hidden">
+    <div className="min-h-screen selection:bg-brand-rust/20 font-sans overflow-x-hidden">
       {!isDashboard && (
         <>
           <Header 
@@ -212,7 +322,18 @@ export default function Layout() {
           whileTap={{ scale: 0.9 }}
           className="fixed bottom-8 right-8 z-[100] bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:bg-[#128C7E] transition-colors flex items-center justify-center group cursor-pointer"
         >
-          <MessageCircle className="w-8 h-8" />
+          <div className="relative">
+            <MessageCircle className="w-8 h-8" />
+            {/* Notification Badge */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 1, type: "spring" }}
+              className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#25D366] shadow-lg"
+            >
+              1
+            </motion.div>
+          </div>
           <span className="absolute right-full mr-4 bg-white text-brand-dark px-4 py-2 rounded-xl text-sm font-bold shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
             Fale conosco no WhatsApp
           </span>

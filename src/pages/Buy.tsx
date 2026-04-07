@@ -20,7 +20,7 @@ export default function Buy() {
     : properties;
 
   return (
-    <div className="pt-32 pb-20 px-6 bg-brancobg min-h-screen">
+    <div className="pt-32 pb-20 px-6 bg-white min-h-screen">
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -49,7 +49,7 @@ export default function Buy() {
               <p className="text-marromescuro/60">Verifique os códigos digitados e tente novamente.</p>
               <button 
                 onClick={() => navigate('/comprar')}
-                className="text-terracota font-bold hover:underline"
+                className="text-terracota font-bold hover:underline cursor-pointer"
               >
                 Ver todos os imóveis
               </button>

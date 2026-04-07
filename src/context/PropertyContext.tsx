@@ -37,6 +37,9 @@ export interface Property {
   hasSauna?: boolean;
   listingType?: 'venda' | 'aluguel';
   condoId?: number;
+  condoFee?: string;
+  iptu?: string;
+  insurance?: string;
 }
 
 interface PropertyContextType {

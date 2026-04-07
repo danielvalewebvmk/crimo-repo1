@@ -22,14 +22,15 @@ export default function Header({ isScrolled, isMenuOpen, setIsMenuOpen, isMobile
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const [isCondoMenuOpen, setIsCondoMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
-  const condoButtonRef = useRef<HTMLButtonElement>(null);
+  const condoButtonRef = useRef<HTMLAnchorElement>(null);
   const [dropdownLeft, setDropdownLeft] = useState(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const location = useLocation();
   const isHome = location.pathname === '/';
   const isPropertyDetail = location.pathname.startsWith('/imovel/');
+  const isCondosList = location.pathname === '/condominios';
   const isCondoDetail = location.pathname.startsWith('/condominio/');
-  const isTransparentPage = isHome || isPropertyDetail || isCondoDetail;
+  const isTransparentPage = isHome || isPropertyDetail || isCondoDetail || isCondosList;
   const [user, setUser] = useState<FirebaseUser | null>(null);
 
   useEffect(() => {
@@ -38,6 +39,10 @@ export default function Header({ isScrolled, isMenuOpen, setIsMenuOpen, isMobile
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    setHasScrolledOnce(false);
+  }, [location.pathname]);
 
   const handleUserClick = async () => {
     if (user) {
@@ -56,6 +61,11 @@ export default function Header({ isScrolled, isMenuOpen, setIsMenuOpen, isMobile
     timeoutRef.current = setTimeout(() => {
       setIsCondoMenuOpen(false);
     }, 100);
+  };
+
+  const closeCondoMenu = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    setIsCondoMenuOpen(false);
   };
 
   useEffect(() => {
@@ -90,30 +100,27 @@ export default function Header({ isScrolled, isMenuOpen, setIsMenuOpen, isMobile
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // On transparent pages (home, detail), we show content if scrolled. On other pages, we always show it.
-  // For condo pages, it only appears when scrolling (not persistent when returning to top)
-  const shouldShow = isCondoDetail ? isScrolled : (isTransparentPage ? (isScrolled || hasScrolledOnce) : true);
+  // The user requested that on first load the navbar does not appear, only when scrolling.
+  // Once it appears, it stays visible even when returning to top.
+  // This behavior resets on page change.
+  const shouldShow = isScrolled || hasScrolledOnce;
+
+  const navbarBg = isCondoDetail
+    ? (shouldShow ? (isDeepScrolled ? "rgba(0, 0, 0, 0.5)" : "rgba(255, 255, 255, 0.1)") : "rgba(255, 255, 255, 0)")
+    : (isTransparentPage 
+        ? (shouldShow ? "rgba(55, 64, 1, 0.3)" : "rgba(55, 64, 1, 0)")
+        : (shouldShow ? "#374001" : "transparent"));
 
   return (
     <header ref={headerRef} className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[98%] max-w-[1800px] flex items-center gap-4">
       <motion.nav 
         initial={false}
         animate={{
-          backgroundColor: isCondoDetail
-            ? (shouldShow ? (isDeepScrolled ? "rgba(0, 0, 0, 0.5)" : "rgba(255, 255, 255, 0.1)") : "rgba(255, 255, 255, 0)")
-            : (isTransparentPage 
-                ? (shouldShow ? "rgba(55, 64, 1, 0.3)" : "rgba(55, 64, 1, 0)")
-                : "#374001"),
-          backdropFilter: isTransparentPage 
-            ? (shouldShow ? "blur(16px)" : "blur(0px)")
-            : "blur(16px)",
-          borderColor: isTransparentPage 
-            ? (shouldShow ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0)")
-            : "rgba(255, 255, 255, 0.1)",
+          backgroundColor: navbarBg,
+          backdropFilter: shouldShow ? "blur(16px)" : "blur(0px)",
+          borderColor: shouldShow ? "rgba(255, 255, 255, 0.1)" : "rgba(255, 255, 255, 0)",
           borderWidth: "1px",
-          boxShadow: isTransparentPage 
-            ? (shouldShow ? "0 25px 50px -12px rgba(0, 0, 0, 0.25)" : "0 0px 0px 0px rgba(0, 0, 0, 0)")
-            : "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+          boxShadow: shouldShow ? "0 25px 50px -12px rgba(0, 0, 0, 0.25)" : "0 0px 0px 0px rgba(0, 0, 0, 0)",
         }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
         className="relative z-10 flex-1 rounded-full py-3 px-8 flex items-center justify-between border-transparent"
@@ -147,7 +154,7 @@ export default function Header({ isScrolled, isMenuOpen, setIsMenuOpen, isMobile
               transition={{ duration: 0.5, delay: 0.1 }}
               className="hidden lg:flex items-center gap-8 text-brand-cream/90 text-sm font-medium tracking-wide mx-8 group/nav"
             >
-              <Link to="/comprar" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white">Imóveis</Link>
+              <Link to="/comprar" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white cursor-pointer">Imóveis</Link>
               
               {/* Condomínios Dropdown Trigger */}
               <div 
@@ -155,19 +162,20 @@ export default function Header({ isScrolled, isMenuOpen, setIsMenuOpen, isMobile
                 onMouseEnter={handleCondoMouseEnter}
                 onMouseLeave={handleCondoMouseLeave}
               >
-                <button 
+                <Link 
+                  to="/condominios"
                   ref={condoButtonRef}
                   className="flex items-center gap-1 transition-all duration-300 group-hover/nav:opacity-40 group-hover/condo:!opacity-100 group-hover/condo:!text-white cursor-pointer"
                 >
                   Condomínios
                   <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isCondoMenuOpen ? 'rotate-180' : ''}`} />
-                </button>
+                </Link>
               </div>
 
-              <Link to="/lancamentos" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white">Lançamentos</Link>
-              <Link to="/sobre" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white">Sobre</Link>
-              <Link to="/contato" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white">Contato</Link>
-              <Link to="/exclusivos" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white">Quero vender</Link>
+              <Link to="/lancamentos" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white cursor-pointer">Lançamentos</Link>
+              <Link to="/sobre" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white cursor-pointer">Sobre</Link>
+              <Link to="/contato" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white cursor-pointer">Contato</Link>
+              <Link to="/exclusivos" className="transition-all duration-300 group-hover/nav:opacity-40 hover:!opacity-100 hover:!text-white cursor-pointer">Quero vender</Link>
             </motion.div>
           )}
         </AnimatePresence>
@@ -331,19 +339,31 @@ export default function Header({ isScrolled, isMenuOpen, setIsMenuOpen, isMobile
         {isCondoMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -40, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0, 
+              scale: 1,
+              backgroundColor: navbarBg,
+              backdropFilter: isTransparentPage 
+                ? (shouldShow ? "blur(16px)" : "blur(0px)")
+                : "blur(16px)",
+            }}
             exit={{ opacity: 0, y: -40, scale: 0.95 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             style={{ left: dropdownLeft, top: '100%' }}
-            className="absolute -translate-x-1/2 mt-2 w-64 bg-[#374001]/60 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/10 overflow-hidden p-2 z-0"
+            className="absolute -translate-x-1/2 mt-2 w-64 rounded-[2rem] shadow-2xl border border-white/10 overflow-hidden p-2 z-0"
             onMouseEnter={handleCondoMouseEnter}
             onMouseLeave={handleCondoMouseLeave}
           >
             <div className="space-y-1">
-              {condos.map((condo) => (
+              {condos
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((condo) => (
                 <Link
                   key={condo.id}
                   to={`/condominio/${condo.id}`}
+                  onClick={closeCondoMenu}
                   className="block px-4 py-3 text-brand-cream/80 hover:text-white hover:bg-white/10 rounded-2xl transition-all font-medium text-xs group/item"
                 >
                   <div className="flex items-center justify-between">
@@ -352,6 +372,15 @@ export default function Header({ isScrolled, isMenuOpen, setIsMenuOpen, isMobile
                   </div>
                 </Link>
               ))}
+              <div className="border-t border-white/10 mt-1 pt-1">
+                <Link
+                  to="/condominios"
+                  onClick={closeCondoMenu}
+                  className="block px-4 py-3 text-white bg-white/5 hover:bg-white/10 rounded-2xl transition-all font-bold text-[10px] uppercase tracking-widest text-center"
+                >
+                  Ver todos condomínios
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

@@ -12,13 +12,8 @@ export default function About() {
         {/* Story Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="relative">
-            <div className="aspect-square rounded-[64px] overflow-hidden shadow-2xl">
-              <img 
-                src="https://i.imgur.com/pe07Ikg.png" 
-                alt="Our Office" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
+            <div className="aspect-square rounded-[64px] overflow-hidden shadow-2xl bg-marromescuro/5 flex items-center justify-center">
+              <Award className="w-20 h-20 text-marromescuro/10" />
             </div>
             <div className="absolute -bottom-8 -right-8 bg-brand-rust text-white p-12 rounded-[48px] shadow-2xl hidden md:block">
               <div className="text-5xl font-serif font-bold">15+</div>
@@ -136,13 +131,13 @@ export default function About() {
                     <div className="flex items-center justify-center gap-4 pt-6 border-t border-brand-dark/5">
                       <a 
                         href={`tel:${broker.phone.replace(/\D/g, '')}`}
-                        className="p-3 bg-brand-cream rounded-xl text-brand-dark/40 hover:text-brand-rust hover:bg-brand-rust/10 transition-all"
+                        className="p-3 bg-brand-cream rounded-xl text-brand-dark/40 hover:text-brand-rust hover:bg-brand-rust/10 transition-all cursor-pointer"
                       >
                         <Phone className="w-5 h-5" />
                       </a>
                       <a 
                         href={`mailto:${broker.email}`}
-                        className="p-3 bg-brand-cream rounded-xl text-brand-dark/40 hover:text-brand-rust hover:bg-brand-rust/10 transition-all"
+                        className="p-3 bg-brand-cream rounded-xl text-brand-dark/40 hover:text-brand-rust hover:bg-brand-rust/10 transition-all cursor-pointer"
                       >
                         <Mail className="w-5 h-5" />
                       </a>
