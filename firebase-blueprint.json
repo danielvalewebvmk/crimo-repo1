@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "Property": {
+      "title": "Property",
+      "description": "A real estate property listing",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "location": { "type": "string" },
+        "city": { "type": "string" },
+        "price": { "type": "string" },
+        "area": { "type": "string" },
+        "rooms": { "type": "number" },
+        "beds": { "type": "number" },
+        "baths": { "type": "number" },
+        "vagas": { "type": "number" },
+        "hasLavabo": { "type": "boolean" },
+        "isExclusive": { "type": "boolean" },
+        "isLaunch": { "type": "boolean" },
+        "isHighEnd": { "type": "boolean" },
+        "isRent": { "type": "boolean" },
+        "isSale": { "type": "boolean" },
+        "image": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "videoUrl": { "type": "string" },
+        "floorPlanUrl": { "type": "string" },
+        "code": { "type": "string" },
+        "broker": { "type": "string" },
+        "condoId": { "type": "string" },
+        "description": { "type": "string" },
+        "neighborhood": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "gastronomy": { "type": "string" },
+            "clubs": { "type": "string" },
+            "image": { "type": "string" }
+          }
+        }
+      },
+      "required": ["title", "type", "location", "price", "image"]
+    },
+    "Broker": {
+      "title": "Broker",
+      "description": "A real estate broker profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "photo": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "creci": { "type": "string" },
+        "instagram": { "type": "string" }
+      },
+      "required": ["name", "role", "photo", "phone"]
+    },
+    "Condo": {
+      "title": "Condo",
+      "description": "A condominium",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "location": { "type": "string" },
+        "bio": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "location", "bio"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user profile",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "email": { "type": "string", "format": "email" }
+      },
+      "required": ["role", "email"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Collection of all users"
+    },
+    "properties": {
+      "schema": { "$ref": "#/entities/Property" },
+      "description": "Collection of all properties"
+    },
+    "brokers": {
+      "schema": { "$ref": "#/entities/Broker" },
+      "description": "Collection of all brokers"
+    },
+    "condos": {
+      "schema": { "$ref": "#/entities/Condo" },
+      "description": "Collection of all condos"
+    },
+    "system_config": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "initial_seed_completed": { "type": "boolean" }
+        }
+      },
+      "description": "System configuration and flags"
+    }
+  }
+}

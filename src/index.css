@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-helvetica: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  
+  --color-brand-rust: #A84E2C;
+  --color-brand-cream: #FFFDF5;
+  --color-brand-dark: #3D2B1F;
+  --color-brancobg: #FFFCEF;
+  --color-terracota: #A64529;
+  --color-marromescuro: #300B00;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @keyframes scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-33.333%); }
+  }
+  .animate-infinite-scroll {
+    animation: scroll 60s linear infinite;
+  }
+  .pause-animation {
+    animation-play-state: paused !important;
+  }
+
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-brand-cream text-brand-dark font-sans;
+  }
+  
+  /* Hide scrollbar for mobile */
+  @media (max-width: 1023px) {
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    *::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
